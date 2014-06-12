@@ -17,8 +17,10 @@ class Movement
     self.class.name
   end
 
-  def score m
-    m.send("#{self.class}contra")
+  class << self
+    def score m
+      m.send("#{self.name}contra")
+    end
   end
 end
 
@@ -31,51 +33,54 @@ end
 ### Clase Rock ###
 
 class Rock < Movement
+  class << self
+    def Papercontra
+      [1,0]
+    end
 
-  def Papercontra
-    [1,0]
-  end
+    def Rockcontra
+      [0,0]
+    end
 
-  def Rockcontra
-    [0,0]
-  end
-
-  def Sccisorscontra
-    [0,1]
+    def Sccisorscontra
+      [0,1]
+    end
   end
 end
 
 ### Clase Paper ###
 
 class Paper < Movement
+  class << self
+    def Papercontra
+      [0,0]
+    end
 
-  def Papercontra
-    [0,0]
-  end
+    def Rockcontra
+      [0,1]
+    end
 
-  def Rockcontra
-    [0,1]
-  end
-
-  def Sccisorscontra
-    [1,0]
+    def Sccisorscontra
+      [1,0]
+    end
   end
 end
 
 ### Clase Sccisors ###
 
 class Sccisors < Movement
+  class << self
+    def Papercontra
+      [0,1]
+    end
 
-  def Papercontra
-    [0,1]
-  end
+    def Rockcontra
+      [1,0]
+    end
 
-  def Rockcontra
-    [1,0]
-  end
-
-  def Sccisorscontra
-    [0,0]
+    def Sccisorscontra
+      [0,0]
+    end
   end
 end
 
@@ -105,6 +110,10 @@ class Uniform < Strategy
   def initialize lista
     @movimientos = lista
   end
+
+  def next
+    Paper
+  end
 end
 
 ### Clase Biased ###
@@ -115,6 +124,10 @@ class Biased < Strategy
 
   def initialize mapa
     @probabilidades = mapa
+  end
+
+  def next
+    Rock
   end
 end
 
@@ -127,11 +140,15 @@ class Mirror < Strategy
   def initialize mov
     @actual = mov
   end
+
+  def next
+    Sccisors
+  end
 end
 
 ### Clase Smart ###
 
-class Smart
+class Smart < Strategy
 
   attr_accessor :r, :p, :s
 
@@ -139,6 +156,10 @@ class Smart
     @r = 0
     @p = 0
     @s = 0
+  end
+
+  def next
+    Paper
   end
 end
 
@@ -153,9 +174,28 @@ class Match
 
   def initialize mapJ
     @jugadores = mapJ
-    @puntuacion = new.Hash
+    @puntuacion = Hash.new
     mapJ.each { |k,v| @puntuacion[k] = 0}
     @puntuacion[:Rounds] = 0
+  end
+
+  def play
+
+    x = []
+    y = []
+    i = 0
+
+    @jugadores.each do |k,v|
+      x << v.next
+      y << k
+    end
+
+    z = x[0].score(x[1])
+
+    [z,y].transpose.each do |n,k|
+      @puntuacion[k] += n
+    end
+    @puntuacion[:Rounds] += 1
   end
 
   def restart
