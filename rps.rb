@@ -103,17 +103,27 @@ end
 
 ### Clase Uniform ###
 
-class Uniform < Strategy
+class Uniform < Strategy #usar array.rotate
   
-  attr_accessor :movimientos
+  attr_accessor :movimientos, :original
 
   def initialize lista
     raise ArgumentError::new("#{caller(0)[-1]}: La lista de movimientos debe ser no vacia") unless !lista.empty?
-    @movimientos = lista
+    @movimientos = @original = lista.uniq
   end
 
   def next ms
-    Paper
+    a = @movimientos[0].to_s
+    @movimientos = @movimientos.rotate
+    if    a == "Rock"
+      Rock
+    elsif a == "Paper"
+      Paper
+    elsif a == "Sccisors"
+      Sccisors
+    else
+      raise Exception::new("#{caller(0)[-1]}: El movimiento \'#{a}\' no existe, solamente \'Rock\', \'Paper\' & \'Sccisors\'")
+    end
   end
 end
 
@@ -124,6 +134,7 @@ class Biased < Strategy
   attr_accessor :probabilidades
 
   def initialize mapa
+    raise ArgumentError::new("#{caller(0)[-1]}: El mapa de probabilidades debe ser no vacia") unless !mapa.empty?
     @probabilidades = mapa
   end
 
@@ -143,7 +154,13 @@ class Mirror < Strategy
   end
 
   def next ms
-    Sccisors
+    if ms.empty?
+      @actual
+    else
+      ret = @actual
+      @actual = ms[0]
+      ret
+    end
   end
 end
 
@@ -160,7 +177,27 @@ class Smart < Strategy
   end
 
   def next ms
-    Paper
+    ms.each do |m|
+      if    m == Rock
+        @r += 1
+      elsif m == Paper
+        @p += 1
+      elsif m == Sccisors
+        @s += 1
+      else
+        raise Exception::new("Existe un elemento de la lista que no es subclase de Movimiento")
+      end
+    end
+    
+    random = (rand*(@r+@p+@s)).truncate
+
+    if random < p
+      Sccisors
+    elsif random < (@p + @r)
+      Paper
+    else  #if  random < (@p + @r + @s)
+      Rock
+    end
   end
 end
 
