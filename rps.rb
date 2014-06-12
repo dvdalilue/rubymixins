@@ -100,7 +100,7 @@ end
 
 class Uniform < Strategy
   
-  attr_reader :movimientos
+  attr_accessor :movimientos
 
   def initialize lista
     @movimientos = lista
@@ -111,7 +111,7 @@ end
 
 class Biased < Strategy
   
-  attr_reader :probabilidades
+  attr_accessor :probabilidades
 
   def initialize mapa
     @probabilidades = mapa
@@ -139,5 +139,26 @@ class Smart
     @r = 0
     @p = 0
     @s = 0
+  end
+end
+
+#########################################################
+###                     Clase Match                   ###
+###       Simula el juego entre dos adversarios       ###
+#########################################################
+
+class Match
+  
+  attr_accessor :jugadores, :puntuacion
+
+  def initialize mapJ
+    @jugadores = mapJ
+    @puntuacion = new.Hash
+    mapJ.each { |k,v| @puntuacion[k] = 0}
+    @puntuacion[:Rounds] = 0
+  end
+
+  def restart
+    # Llama las funciones 'reset' de cada estrategia
   end
 end
