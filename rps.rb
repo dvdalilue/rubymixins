@@ -28,23 +28,6 @@ end
 ### para representar los movimientos en rps           ###
 #########################################################
 
-### Clase Sccisors ###
-
-class Sccisors < Movement
-
-  def Papercontra
-    [0,1]
-  end
-
-  def Rockcontra
-    [1,0]
-  end
-
-  def Sccisorscontra
-    [0,0]
-  end
-end
-
 ### Clase Rock ###
 
 class Rock < Movement
@@ -76,6 +59,23 @@ class Paper < Movement
 
   def Sccisorscontra
     [1,0]
+  end
+end
+
+### Clase Sccisors ###
+
+class Sccisors < Movement
+
+  def Papercontra
+    [0,1]
+  end
+
+  def Rockcontra
+    [1,0]
+  end
+
+  def Sccisorscontra
+    [0,0]
   end
 end
 
