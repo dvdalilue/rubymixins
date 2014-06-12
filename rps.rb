@@ -108,10 +108,11 @@ class Uniform < Strategy
   attr_accessor :movimientos
 
   def initialize lista
+    raise ArgumentError::new("#{caller(0)[-1]}: La lista de movimientos debe ser no vacia") unless !lista.empty?
     @movimientos = lista
   end
 
-  def next
+  def next ms
     Paper
   end
 end
@@ -126,7 +127,7 @@ class Biased < Strategy
     @probabilidades = mapa
   end
 
-  def next
+  def next ms
     Rock
   end
 end
@@ -141,7 +142,7 @@ class Mirror < Strategy
     @actual = mov
   end
 
-  def next
+  def next ms
     Sccisors
   end
 end
@@ -158,7 +159,7 @@ class Smart < Strategy
     @s = 0
   end
 
-  def next
+  def next ms
     Paper
   end
 end
@@ -186,7 +187,7 @@ class Match
     i = 0
 
     @jugadores.each do |k,v|
-      x << v.next
+      x << v.next([])
       y << k
     end
 
@@ -196,6 +197,17 @@ class Match
       @puntuacion[k] += n
     end
     @puntuacion[:Rounds] += 1
+  end
+
+  def rounds n
+    if n > 0
+      play 
+      rounds(n - 1)
+    end
+  end
+
+  def upto n
+    play until @puntuacion.has_value? n # Esto realizara 100 rondas, dado que el hash tiene a :Rounds (counter) 
   end
 
   def restart
