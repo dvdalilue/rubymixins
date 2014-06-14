@@ -13,9 +13,9 @@
 
 class Movement
 
- # def to_s 
- #   self.class.name ## El lenguaje crea esas funciones para todo clase e instancia (ALERT: concha de mango is APROACHING!!!)
- # end
+  def to_s
+    self.class.name
+  end
 
   class << self
     def score m
@@ -90,8 +90,17 @@ end
 #########################################################
 
 class Strategy
+  attr_accessor :strategia, :original
+
   def to_s
-    self.class.name #!!!Alert:::...mango
+    self.class.name
+  end
+
+  def update m
+  end
+
+  def reset
+    @strategia = @original
   end
 end
 
@@ -103,18 +112,16 @@ end
 
 ### Clase Uniform ###
 
-class Uniform < Strategy #usar array.rotate
-  
-  attr_accessor :movimientos, :original
+class Uniform < Strategy
 
   def initialize lista
     raise ArgumentError::new("#{caller(0)[-1]}: La lista de movimientos debe ser no vacia") unless !lista.empty?
-    @movimientos = @original = lista.uniq
+    @strategia = @original = lista.uniq
   end
 
   def next ms
-    a = @movimientos[0].to_s
-    @movimientos = @movimientos.rotate
+    a = @strategia[0].to_s
+    @strategia = @strategia.rotate
     if    a == "Rock"
       Rock
     elsif a == "Paper"
@@ -125,40 +132,39 @@ class Uniform < Strategy #usar array.rotate
       raise Exception::new("#{caller(0)[-1]}: El movimiento \'#{a}\' no existe, solamente \'Rock\', \'Paper\' & \'Sccisors\'")
     end
   end
-
-  def reset
-    @movimientos = @original
-  end
 end
 
 ### Clase Biased ###
 
 class Biased < Strategy
   
-  attr_accessor :probabilidades, :original, :f
+  attr_accessor :f
 
   def initialize mapa
     raise ArgumentError::new("#{caller(0)[-1]}: El mapa de probabilidades debe ser no vacia") unless !mapa.empty?
-    @probabilidades = @original = mapa
-    @f = 1
+    @strategia = @original = mapa
+    @f = 0
     mapa.values.each { |x| @f += x }
   end
 
   def next ms
     if @f.eql? 0
-      @probabilidades = @original
+      @strategia = @original
       @original.values.each { |x| @f += x }
       self.next ms
     else
-      r = (rand*@f).truncate
-
+      r = (rand*@f).truncate; e = []
+      v = @strategia.values.sort.reverse
+      v.each { |p| e.concat([p]*p) }
+      k = @strategia.key(e[r])
+      @strategia[k] -= 1
       @f -= 1
-      Rock
+      begin
+        Object::const_get(k.to_s)
+      rescue NameError => ne
+        raise NameError::new("#{caller(0)[-1]}: La llave \'#{k.to_s}\' del Hash de probabilidades no puede ser reconocido como Movement")
+      end
     end
-  end
-
-  def reset
-    probabilidades = original
   end
 end
 
@@ -166,30 +172,23 @@ end
 
 class Mirror < Strategy
 
-  attr_accessor :actual
-
   def initialize mov
-    @actual = mov
+    @strategia = @original = mov
   end
 
   def next ms
     if ms.empty?
-      @actual
+      @strategia
     else
-      ret = @actual
-      @actual = ms.last
+      ret = @strategia
+      @strategia = ms.last
       ret
     end
   end
 
-  # Me imagino que debo hacer una funcion que regrese al estado anterior
-  # dado que en el encuentro con Smart voy a necesitar la jugada del
-  # openentes y uno debe saber regresar
-
-  # PS. Voy a hacer un comentario general. Solo hay que hacer las funciones 
-  # como dice el enunciado, lo que hagan dentro no es problema del llamador
-  # (DUCK TYPING!!!)
-
+  def update m
+    @actual = m
+  end
 end
 
 ### Clase Smart ###
@@ -206,15 +205,12 @@ class Smart < Strategy
 
   def next ms
     ms.each do |m|
-      if    m.to_s == "Rock"
-        @r += 1
-      elsif m.to_s == "Paper"
-        @p += 1
-      elsif m.to_s == "Sccisors"
-        @s += 1
-      else
-        raise Exception::new("Existe un elemento de la lista que no es subclase de Movimiento")
-      end
+      self.update m
+#      elsif m.to_s == "Sccisors"
+#        @s += 1
+#      else
+#        raise Exception::new("Existe un elemento de la lista que no es subclase de Movement")
+#      end
     end
     
     random = (rand*(@r+@p+@s)).truncate
@@ -223,9 +219,23 @@ class Smart < Strategy
       Sccisors
     elsif random < (@p + @r)
       Paper
-    else  #if  random < (@p + @r + @s)
+    else  # if random < (@p + @r + @s)
       Rock
     end
+  end
+  
+  def update m
+    if    m.to_s == "Rock"
+      @r += 1
+    elsif m.to_s == "Paper"
+      @p += 1
+    else 
+      @s += 1
+    end
+  end
+
+  def reset
+    initialize
   end
 end
 
@@ -242,25 +252,20 @@ class Match
     raise Exception::new("Se necesitan exactamente 2 jugadores, ni mas ni menos.") unless mapJ.length == 2
     @jugadores = mapJ
     @puntuacion = Hash.new
+
     mapJ.each { |k,v| @puntuacion[k] = 0}
     @puntuacion[:Rounds] = 0
   end
 
-  def play # En vez de hacerlo general, parece que se debe restringir el numero
-           # de jugadores a 2!!
-
-    x = @jugadores.values.map { |v| v = v.next([]) }
-    
-    #x = x.combination(2).to_a
-    #y = y.combination(2).to_a
-
-    x = x[0].score(x[1]) #x.each { |a| z << a[0].score(a[1]) }
+  def play
+    j = @jugadores.values
+    x = j.map { |v| v = v.next([]) }
+    [j,x.reverse].transpose.map { |s,u| s.update(u) }
+    x = x[0].score(x[1])
     y = @jugadores.keys
 
-    [x,y].transpose.each do |n,k|
-      @puntuacion[k[0]] += n[0]
-      @puntuacion[k[1]] += n[1]
-    end
+    @puntuacion[y[0]] += x[0]
+    @puntuacion[y[1]] += x[1]
     @puntuacion[:Rounds] += 1
   end
 
@@ -276,6 +281,6 @@ class Match
   end
 
   def restart
-    # Llama las funciones 'reset' de cada estrategia
+    @jugadores.values.each { |s| s.reset }
   end
 end
