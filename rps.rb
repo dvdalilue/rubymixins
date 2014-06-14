@@ -13,13 +13,13 @@
 
 class Movement
 
-  def to_s
-    self.class.name
-  end
+ # def to_s 
+ #   self.class.name ## El lenguaje crea esas funciones para todo clase e instancia (ALERT: concha de mango is APROACHING!!!)
+ # end
 
   class << self
     def score m
-      m.send("#{self.name}contra")
+      m.send("#{self.to_s}contra")
     end
   end
 end
@@ -91,7 +91,7 @@ end
 
 class Strategy
   def to_s
-    self.class.name
+    self.class.name #!!!Alert:::...mango
   end
 end
 
@@ -125,21 +125,40 @@ class Uniform < Strategy #usar array.rotate
       raise Exception::new("#{caller(0)[-1]}: El movimiento \'#{a}\' no existe, solamente \'Rock\', \'Paper\' & \'Sccisors\'")
     end
   end
+
+  def reset
+    @movimientos = @original
+  end
 end
 
 ### Clase Biased ###
 
 class Biased < Strategy
   
-  attr_accessor :probabilidades
+  attr_accessor :probabilidades, :original, :f
 
   def initialize mapa
     raise ArgumentError::new("#{caller(0)[-1]}: El mapa de probabilidades debe ser no vacia") unless !mapa.empty?
-    @probabilidades = mapa
+    @probabilidades = @original = mapa
+    @f = 1
+    mapa.values.each { |x| @f += x }
   end
 
   def next ms
-    Rock
+    if @f.eql? 0
+      @probabilidades = @original
+      @original.values.each { |x| @f += x }
+      self.next ms
+    else
+      r = (rand*@f).truncate
+
+      @f -= 1
+      Rock
+    end
+  end
+
+  def reset
+    probabilidades = original
   end
 end
 
@@ -158,10 +177,19 @@ class Mirror < Strategy
       @actual
     else
       ret = @actual
-      @actual = ms[0]
+      @actual = ms.last
       ret
     end
   end
+
+  # Me imagino que debo hacer una funcion que regrese al estado anterior
+  # dado que en el encuentro con Smart voy a necesitar la jugada del
+  # openentes y uno debe saber regresar
+
+  # PS. Voy a hacer un comentario general. Solo hay que hacer las funciones 
+  # como dice el enunciado, lo que hagan dentro no es problema del llamador
+  # (DUCK TYPING!!!)
+
 end
 
 ### Clase Smart ###
@@ -178,11 +206,11 @@ class Smart < Strategy
 
   def next ms
     ms.each do |m|
-      if    m == Rock
+      if    m.to_s == "Rock"
         @r += 1
-      elsif m == Paper
+      elsif m.to_s == "Paper"
         @p += 1
-      elsif m == Sccisors
+      elsif m.to_s == "Sccisors"
         @s += 1
       else
         raise Exception::new("Existe un elemento de la lista que no es subclase de Movimiento")
@@ -191,7 +219,7 @@ class Smart < Strategy
     
     random = (rand*(@r+@p+@s)).truncate
 
-    if random < p
+    if 0 <= random || random < p
       Sccisors
     elsif random < (@p + @r)
       Paper
@@ -211,27 +239,27 @@ class Match
   attr_accessor :jugadores, :puntuacion
 
   def initialize mapJ
+    raise Exception::new("Se necesitan exactamente 2 jugadores, ni mas ni menos.") unless mapJ.length == 2
     @jugadores = mapJ
     @puntuacion = Hash.new
     mapJ.each { |k,v| @puntuacion[k] = 0}
     @puntuacion[:Rounds] = 0
   end
 
-  def play
+  def play # En vez de hacerlo general, parece que se debe restringir el numero
+           # de jugadores a 2!!
 
-    x = []
-    y = []
-    i = 0
+    x = @jugadores.values.map { |v| v = v.next([]) }
+    
+    #x = x.combination(2).to_a
+    #y = y.combination(2).to_a
 
-    @jugadores.each do |k,v|
-      x << v.next([])
-      y << k
-    end
+    x = x[0].score(x[1]) #x.each { |a| z << a[0].score(a[1]) }
+    y = @jugadores.keys
 
-    z = x[0].score(x[1])
-
-    [z,y].transpose.each do |n,k|
-      @puntuacion[k] += n
+    [x,y].transpose.each do |n,k|
+      @puntuacion[k[0]] += n[0]
+      @puntuacion[k[1]] += n[1]
     end
     @puntuacion[:Rounds] += 1
   end
