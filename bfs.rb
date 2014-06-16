@@ -1,3 +1,16 @@
+module BFS
+  def find(start, predicate) # level - order (bfs)
+    if !start.eql? nil
+      q = [start]
+      while !q.empty?
+        a = q.shift
+        return a if predicate.call(a.value)
+        a.each { |c| q.push(c) }
+      end
+    end
+  end
+end
+
 class BinTree
   include BFS
   attr_accessor :value, # Valor almacenado en el nodo
@@ -30,18 +43,5 @@ class GraphNode
     @children.each do |c|
       yield c
     end unless @children.nil?
-  end
-end
-
-module BFS
-  def find(start, predicate) # level - order (bfs)
-    if !start.eql? nil
-      q = [start]
-      while !q.empty?
-        a = q.shift
-        return a if a.value.send(predicate)
-        a.each { |c| q.push(c) }
-      end
-    end
   end
 end

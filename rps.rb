@@ -122,13 +122,9 @@ class Uniform < Strategy
   def next ms
     a = @strategia[0].to_s
     @strategia = @strategia.rotate
-    if    a == "Rock"
-      Rock
-    elsif a == "Paper"
-      Paper
-    elsif a == "Sccisors"
-      Sccisors
-    else
+    begin
+      Object::const_get(a)
+    rescue NameError => ne
       raise Exception::new("#{caller(0)[-1]}: El movimiento \'#{a}\' no existe, solamente \'Rock\', \'Paper\' & \'Sccisors\'")
     end
   end
