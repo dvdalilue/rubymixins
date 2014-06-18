@@ -2,10 +2,11 @@ module BFS
   def find(start, predicate) # level - order (bfs)
     if !start.nil?
       q = [start]
+      block = lambda { |c| q.push(c) }
       while !q.empty?
         a = q.shift
         return a if predicate.call(a.value)
-        a.each { |c| q.push(c) }
+        a.each block
       end
     end
   end
@@ -17,7 +18,8 @@ module BFS
       while !q.empty?
         a = q.shift
         return p[a] + [a] if predicate.call(a.value)
-        a.each { |c| q.push(c); p[c] = p[a] + [a] }
+        block = lambda { |c| q.push(c); p[c] = p[a] + [a] }
+        a.each block
       end
     end
   end
@@ -35,9 +37,9 @@ class BinTree
     @right = r
   end
 
-  def each #&block
-    yield @left  unless @left.nil?
-    yield @right unless @right.nil?
+  def each b #&block
+    b.call(@left)  unless @left.nil?
+    b.call(@right) unless @right.nil?
   end
 
   def to_s
@@ -56,9 +58,9 @@ class GraphNode
     @children = c
   end
 
-  def each
+  def each b
     @children.each do |c|
-      yield c
+      b.call(c)
     end unless @children.nil?
   end
 end
