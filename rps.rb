@@ -1,124 +1,120 @@
+#
+# Juego de Rock, Paper & Sccisors
+#
+# Author::    David Lilue  09-10444. Luis Miranda 10-10463
+# Copyright:: Copyright (c) 2014 Universidad Simon Bolivar
+# License::   Distribuye bajo los mismos terminos de Ruby
 
-#######################################
-### Juego de Rock, Paper & Sccisors ###
-###      David Lilue  09-10444      ###
-###      Luis Miranda 10-10463      ###
-#######################################
-
-#########################################################
-###                  Clase Movimiento                 ###
-### Define la funcion 'to_s' para todas sus subclases ###
-### Ademas de 'score' con doble despacho              ###
-#########################################################
+# Esta clase es la generalizacion de los movimientos 'Rock', 
+# 'Paper' y 'Sccisors'.
+# El metodo to_s imprime el nombre de la clase.
 
 class Movement
-
+  # Devuelve un string para la instancia de la clase.
   def to_s
     self.class.name
   end
-
-  class << self
-    def score m
-      m.send("#{self.to_s}contra")
-    end
-  end
 end
 
-#########################################################
-###               Subclases - Movimiento              ###
-### Subclases 'Piedra', 'Papel' y 'Tijera' (en ingles)###
-### para representar los movimientos en rps           ###
-#########################################################
-
-### Clase Rock ###
+# Esta clase representa la jugada de Rock(Piedra).
 
 class Rock < Movement
   class << self
-    def Papercontra
+    # Enfrentamiento de Rock contra Paper invertido.
+    def contra_paper
       [1,0]
     end
-
-    def Rockcontra
+    # Enfrentamiento de Rock contra Rock invertido.
+    def contra_rock
       [0,0]
     end
-
-    def Sccisorscontra
+    # Enfrentamiento de Rock contra Sccisors invertido.
+    def contra_sccisors
       [0,1]
+    end
+    # Calcula el score de Rock contra m.
+    def score m
+      m.contra_rock
     end
   end
 end
 
-### Clase Paper ###
+# Esta clase representa la jugada de Paper(Papel).
 
 class Paper < Movement
   class << self
-    def Papercontra
+    # Enfrentamiento de Paper contra Paper invertido.
+    def contra_paper
       [0,0]
     end
-
-    def Rockcontra
+    # Enfrentamiento de Paper contra Rock invertido.
+    def contra_rock
       [0,1]
     end
-
-    def Sccisorscontra
+    # Enfrentamiento de Paper contra Sccisors invertido.
+    def contra_sccisors
       [1,0]
+    end
+    # Calcula el score de Paper contra m.
+    def score m
+      m.contra_paper
     end
   end
 end
 
-### Clase Sccisors ###
+# Esta clase representa la jugada de Sccisors(Tijera).
 
 class Sccisors < Movement
   class << self
-    def Papercontra
+    # Enfrentamiento de Sccisors contra Paper invertido.
+    def contra_paper
       [0,1]
     end
-
-    def Rockcontra
+    # Enfrentamiento de Sccisors contra Rock invertido.
+    def contra_rock
       [1,0]
     end
-
-    def Sccisorscontra
+    # Enfrentamiento de Sccisors contra Sccisors invertido.
+    def contra_sccisors
       [0,0]
+    end
+    # Calcula el score de Sccisors contra m.
+    def score m
+      m.contra_sccisors
     end
   end
 end
 
-#########################################################
-###                   Clase Strategy                  ###
-###     Representa cada jugador durante el juego      ###
-#########################################################
+# Generalizacion de las estrategias de cada jugador.
 
 class Strategy
-  attr_accessor :strategia, :original
-
+  # Estructura usada para la estrategia de juego.
+  attr_accessor :strategia
+  # Estructura original.
+  attr_accessor :original
+  # Devuelve un string para la instancia de la clase.
   def to_s
     self.class.name
   end
-
-  def update m
+  # Metedo para actulizar los valores de la estrategia. Si lo necesita.
+  def update m 
   end
-
+  # Lleva la estrategia a su estado inicial.
   def reset
     @strategia = @original
   end
 end
 
-#########################################################
-###                Subclases - Strategy               ###
-### Especializaciones de las clase Strategy para sus  ###
-### distintos comportamientos en el juego de RPS      ###
-#########################################################
-
-### Clase Uniform ###
+# Estrategia de juego que elige uno a uno la jugada de la lista
+# pasada en su construccion.
 
 class Uniform < Strategy
-
+  # Inicializa los valores heredades del padre con la lista pasada como parametro.
   def initialize lista
     raise ArgumentError::new("#{caller(0)[-1]}: La lista de movimientos debe ser no vacia") unless !lista.empty?
     @strategia = @original = lista.uniq
   end
-
+  # Calcula la siguiente jugada de la estrategia.
   def next ms
     a = @strategia[0].to_s
     @strategia = @strategia.rotate
@@ -130,19 +126,20 @@ class Uniform < Strategy
   end
 end
 
-### Clase Biased ###
+# Estrategia que calcula su proxima jugada a partir de las
+# probabilidades pasadas como un Hash.
 
 class Biased < Strategy
-  
+  # Numero de posibles jugadas.
   attr_accessor :f
-
+  # Inicializa los valores heredades del padre con el mapa pasada como parametro.
   def initialize mapa
     raise ArgumentError::new("#{caller(0)[-1]}: El mapa de probabilidades debe ser no vacia") unless !mapa.empty?
     @strategia = @original = mapa
     @f = 0
     mapa.values.each { |x| @f += x }
   end
-
+  # Calcula la siguiente jugada de la estrategia.
   def next ms
     if @f.eql? 0
       @strategia = @original
@@ -164,14 +161,14 @@ class Biased < Strategy
   end
 end
 
-### Clase Mirror ###
+# Estrategia que copia la jugada anterior de su oponente.
 
 class Mirror < Strategy
-
+  # Inicializa la estrategia con un movimiento inicial.
   def initialize mov
     @strategia = @original = mov
   end
-
+  # Calcula la siguiente jugada de la estrategia.
   def next ms
     if ms.empty?
       @strategia
@@ -181,32 +178,28 @@ class Mirror < Strategy
       ret
     end
   end
-
+  # Actualiza el valor de strategia con m.
   def update m
-    @actual = m
+    @strategia = m
   end
 end
 
-### Clase Smart ###
+# Estrategia que decide su jugada a partir de recordar todas
+# las jugadas del oponente. A partir de un calculo y aleatoriedad.
 
 class Smart < Strategy
-
+  # Contador de movimiento.
   attr_accessor :r, :p, :s
-
+  #Inicializa todos en cero.
   def initialize
     @r = 0
     @p = 0
     @s = 0
   end
-
+  # Calcula la siguiente jugada de la estrategia.
   def next ms
     ms.each do |m|
       self.update m
-#      elsif m.to_s == "Sccisors"
-#        @s += 1
-#      else
-#        raise Exception::new("Existe un elemento de la lista que no es subclase de Movement")
-#      end
     end
     
     random = (rand*(@r+@p+@s)).truncate
@@ -219,7 +212,7 @@ class Smart < Strategy
       Rock
     end
   end
-  
+  # Actualiza un contador dependiendo de la jugada m
   def update m
     if    m.to_s == "Rock"
       @r += 1
@@ -229,21 +222,21 @@ class Smart < Strategy
       @s += 1
     end
   end
-
+  # Regresa al esstado inicial de la estrategia.
   def reset
     initialize
   end
 end
 
-#########################################################
-###                     Clase Match                   ###
-###       Simula el juego entre dos adversarios       ###
-#########################################################
+# Esta clase simula el juego entre dos adversarios. 
+# Cada uno con su respectiva instancia de una estrategia.
 
 class Match
-  
-  attr_accessor :jugadores, :puntuacion
-
+  # Mapa con el nombre de los jugadores como llaves y estrategias como values. 
+  attr_accessor :jugadores
+  # Mapa con los jugadores con su puntuacion y el numero de rounds.
+  attr_accessor :puntuacion
+  # Inicializa el mapa de jugadores con mapJ y crea uno nuevo para los puntajes.
   def initialize mapJ
     raise Exception::new("Se necesitan exactamente 2 jugadores, ni mas ni menos.") unless mapJ.length == 2
     @jugadores = mapJ
@@ -252,7 +245,7 @@ class Match
     mapJ.each { |k,v| @puntuacion[k] = 0}
     @puntuacion[:Rounds] = 0
   end
-
+  # Realiza una unica jugada a partir de las estrategias de cada jugador.
   def play
     j = @jugadores.values
     x = j.map { |v| v = v.next([]) }
@@ -264,18 +257,18 @@ class Match
     @puntuacion[y[1]] += x[1]
     @puntuacion[:Rounds] += 1
   end
-
+  # Juega tantas veces como n diga.
   def rounds n
     if n > 0
       play 
       rounds(n - 1)
     end
   end
-
+  # Juega hasta que un jugador alcanza el puntaje n.
   def upto n
-    play until @puntuacion.has_value? n # Esto realizara 100 rondas, dado que el hash tiene a :Rounds (counter) 
+    play until (@jugadores.keys.map { |k| @puntuacion[k] == n }).inject { |acc,x| acc || x }
   end
-
+  # Vuelve la partida a su estado inicial.
   def restart
     @jugadores.values.each { |s| s.reset }
   end
