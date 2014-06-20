@@ -116,7 +116,7 @@ class Uniform < Strategy
   end
   # Calcula la siguiente jugada de la estrategia.
   def next ms
-    a = @strategia[0].to_s
+    a = @strategia.first.to_s
     @strategia = @strategia.rotate
     begin
       Object::const_get(a)
@@ -135,14 +135,15 @@ class Biased < Strategy
   # Inicializa los valores heredades del padre con el mapa pasada como parametro.
   def initialize mapa
     raise ArgumentError::new("#{caller(0)[-1]}: El mapa de probabilidades debe ser no vacia") unless !mapa.empty?
-    @strategia = @original = mapa
+    @original = mapa
+    @strategia = mapa.clone
     @f = 0
     mapa.values.each { |x| @f += x }
   end
   # Calcula la siguiente jugada de la estrategia.
   def next ms
     if @f.eql? 0
-      @strategia = @original
+      @strategia = @original.clone
       @original.values.each { |x| @f += x }
       self.next ms
     else
@@ -155,7 +156,7 @@ class Biased < Strategy
       begin
         Object::const_get(k.to_s)
       rescue NameError => ne
-        raise NameError::new("#{caller(0)[-1]}: La llave \'#{k.to_s}\' del Hash de probabilidades no puede ser reconocido como Movement")
+        raise NameError::new("#{caller(0)[-1]}: La llave \'#{k}\' del Hash de probabilidades no puede ser reconocido como Movement")
       end
     end
   end
@@ -190,7 +191,7 @@ end
 class Smart < Strategy
   # Contador de movimiento.
   attr_accessor :r, :p, :s
-  #Inicializa todos en cero.
+  #Inicializa todos los atributos en cero.
   def initialize
     @r = 0
     @p = 0
@@ -214,13 +215,7 @@ class Smart < Strategy
   end
   # Actualiza un contador dependiendo de la jugada m
   def update m
-    if    m.to_s == "Rock"
-      @r += 1
-    elsif m.to_s == "Paper"
-      @p += 1
-    else 
-      @s += 1
-    end
+    send("#{m.to_s[0].downcase}=", send("#{m.to_s[0].downcase}") + 1) if m.to_s =~ /\A(Rock|Paper|Sccisors)\z/
   end
   # Regresa al esstado inicial de la estrategia.
   def reset
@@ -248,13 +243,11 @@ class Match
   # Realiza una unica jugada a partir de las estrategias de cada jugador.
   def play
     j = @jugadores.values
-    x = j.map { |v| v = v.next([]) }
+    x = j.map { |v| v.next([]) }
     [j,x.reverse].transpose.map { |s,u| s.update(u) }
     x = x[0].score(x[1])
     y = @jugadores.keys
-
-    @puntuacion[y[0]] += x[0]
-    @puntuacion[y[1]] += x[1]
+    @puntuacion[y[0]] += x[0]; @puntuacion[y[1]] += x[1]
     @puntuacion[:Rounds] += 1
   end
   # Juega tantas veces como n diga.
