@@ -23,6 +23,26 @@ module BFS
       end
     end
   end
+
+  
+  # Creo que funciona como una especie de map
+  # asi deberia ser el codigo, no estoy seguro
+  # falta probarlo xD
+
+  ######################################
+  def walk(start, action)              #
+    if !start.nil?                     #
+      q = [start]                      #
+      block = lambda { |c| q.push(c) } #
+      while !q.empty?                  #
+        a = q.shift                    #
+        a.to_s                         #
+        a.each block                   #
+      end                              #
+    end                                #
+  end                                  #
+  ######################################
+
 end
 
 class BinTree
@@ -43,8 +63,8 @@ class BinTree
   end
 
   def to_s
-    "#{@value}"
-    #"(#{@value}-#{@left.to_s}-#{@right.to_s})"
+    #"#{@value}"
+    "(#{@value}-#{@left.to_s}-#{@right.to_s})"
   end
 end
 
@@ -64,3 +84,21 @@ class GraphNode
     end unless @children.nil?
   end
 end
+
+class LCR
+  attr_reader :value
+  
+  def initialize(where,left,right)
+    
+    left.map! { |c| c.to_sym }
+    right.map! { |c| c.to_sym }
+    
+    @value = {"where"=>where.to_sym,"left"=>left,"right"=>right}
+  end
+
+  def to_s
+    value.to_s
+  end
+end
+
+  
