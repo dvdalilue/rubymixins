@@ -89,9 +89,9 @@ end
 
 class Strategy
   # Estructura usada para la estrategia de juego.
-  attr_accessor :strategia
+  @strategia
   # Estructura original.
-  attr_accessor :original
+  @original
   # Devuelve un string para la instancia de la clase.
   def to_s
     self.class.name
@@ -130,15 +130,13 @@ end
 # probabilidades pasadas como un Hash.
 
 class Biased < Strategy
-  # Numero de posibles jugadas.
-  attr_accessor :f
   # Inicializa los valores heredades del padre con el mapa pasada como parametro.
   def initialize mapa
     raise ArgumentError::new("#{caller(0)[-1]}: El mapa de probabilidades debe ser no vacia") unless !mapa.empty?
     @original = mapa
     @strategia = mapa.clone
     @f = 0
-    mapa.values.each { |x| @f += x }
+    mapa.values.each { |x| @f += x } # Numero de jugadas en total(Espacio Muestral)
   end
   # Calcula la siguiente jugada de la estrategia.
   def next ms
@@ -194,8 +192,6 @@ end
 # las jugadas del oponente. A partir de un calculo y aleatoriedad.
 
 class Smart < Strategy
-  # Contador de movimiento.
-  attr_accessor :r, :p, :s
   #Inicializa todos los atributos en cero.
   def initialize
     @r = 0
@@ -233,9 +229,9 @@ end
 
 class Match
   # Mapa con el nombre de los jugadores como llaves y estrategias como values. 
-  attr_accessor :jugadores
+  attr_reader :jugadores
   # Mapa con los jugadores con su puntuacion y el numero de rounds.
-  attr_accessor :puntuacion
+  attr_reader :puntuacion
   # Inicializa el mapa de jugadores con mapJ y crea uno nuevo para los puntajes.
   def initialize mapJ
     raise Exception::new("Se necesitan exactamente 2 jugadores, ni mas ni menos.") unless mapJ.length == 2
@@ -269,5 +265,7 @@ class Match
   # Vuelve la partida a su estado inicial.
   def restart
     @jugadores.values.each { |s| s.reset }
+    @jugadores.keys.each { |k| @puntuacion[k] = 0}
+    @puntuacion[:Rounds] = 0
   end
 end
