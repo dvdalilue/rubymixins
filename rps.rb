@@ -160,6 +160,11 @@ class Biased < Strategy
       end
     end
   end
+  # Lleva la estrategia a su estado inicial.
+  def reset
+    @strategia = @original.clone
+    @original.values.each { |x| @f += x }
+  end
 end
 
 # Estrategia que copia la jugada anterior de su oponente.
