@@ -1,48 +1,52 @@
 module BFS
-  def find(start, predicate) # level - order (bfs)
-    if !start.nil?
-      q = [start]
-      block = lambda { |c| q.push(c) }
-      while !q.empty?
-        a = q.shift
-        return a if predicate.call(a.value)
+  def bfs(start)
+    q = [start]
+    visitado = []
+    block = lambda { |c| q.push(c) }
+    while !q.empty?
+      a = q.shift
+      if !visitado.include? a
         a.each block
+        yield a
+        visitado << a
       end
+    end
+  end
+  
+  def find(start, predicate)
+    if start.respond_to? 'bfs'
+      start.bfs(start) { |nodo| return nodo if predicate.call(nodo.value) }
+    else
+      puts "*** find: \'#{start}\' no es una estructura que pueda ser recorrida en BFS"
     end
   end
 
   def path(start, predicate)
-    if !start.nil?
-      q = [start]
+    if start.respond_to? 'bfs'
       p = { start => [] }
-      while !q.empty?
-        a = q.shift
-        return p[a] + [a] if predicate.call(a.value)
-        block = lambda { |c| q.push(c); p[c] = p[a] + [a] }
-        a.each block
+      padre = start
+      start.bfs(start) do |nodo|
+        return p[padre] + [nodo] if predicate.call(nodo.value)
+        p[nodo] = p[padre] + [nodo]
+        padre = nodo
       end
-    end
+    else
+      puts "*** path: \'#{start}\' no es una estructura que pueda ser recorrida en BFS"
+    end    
   end
 
-  
-  # Creo que funciona como una especie de map
-  # asi deberia ser el codigo, no estoy seguro
-  # falta probarlo xD
-
-  ######################################
-  def walk(start, action)              #
-    if !start.nil?                     #
-      q = [start]                      #
-      block = lambda { |c| q.push(c) } #
-      while !q.empty?                  #
-        a = q.shift                    #
-        a.to_s                         #
-        a.each block                   #
-      end                              #
-    end                                #
-  end                                  #
-  ######################################
-
+  def walk(start, action=lambda {|doe|})              
+    if start.respond_to? 'bfs'
+      visitados = []
+      start.bfs(start) do |nodo|
+        action.call(nodo)
+        visitados << nodo
+      end
+      visitados
+    else
+      puts "*** walk: \'#{start}\' no es una estructura que pueda ser recorrida en BFS"
+    end                           
+  end
 end
 
 class BinTree
@@ -57,14 +61,14 @@ class BinTree
     @right = r
   end
 
-  def each b #&block
+  def each b
     b.call(@left)  unless @left.nil?
     b.call(@right) unless @right.nil?
   end
 
   def to_s
-    #"#{@value}"
-    "(#{@value}-#{@left.to_s}-#{@right.to_s})"
+    "#{@value}"
+    #"(#{@value}-#{@left.to_s}-#{@right.to_s})"
   end
 end
 
