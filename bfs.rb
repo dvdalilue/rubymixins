@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Juego de Rock, Paper & Sccisors
+# Implementacion de Arbol Binario y Grafo de Nodos. Ademas de su recorrido BFS.
 #
 # Author::    David Lilue  09-10444. Luis Miranda 10-10463
 # Copyright:: Copyright (c) 2014 Universidad Simon Bolivar
