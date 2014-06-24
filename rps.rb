@@ -92,16 +92,16 @@ class Strategy
   @strategia
   # Estructura original.
   @original
-  # Devuelve un string para la instancia de la clase.
-  def to_s
-    self.class.name
-  end
   # Metedo para actulizar los valores de la estrategia. Si lo necesita.
   def update m 
   end
   # Lleva la estrategia a su estado inicial.
   def reset
     @strategia = @original
+  end
+  # Devuelve un string con informacion de la instancia de la clase.
+  def to_s
+    "#{self.class.name}: #{@strategia}"
   end
 end
 
@@ -222,6 +222,10 @@ class Smart < Strategy
   def reset
     initialize
   end
+  # Devuelve un string con la informacion de la instancia de la clase.
+  def to_s
+    "#{self.class.name}: r=#{@r}, p=#{@p} y s=#{@s}" 
+  end
 end
 
 # Esta clase simula el juego entre dos adversarios. 
@@ -267,5 +271,9 @@ class Match
     @jugadores.values.each { |s| s.reset }
     @jugadores.keys.each { |k| @puntuacion[k] = 0}
     @puntuacion[:Rounds] = 0
+  end
+  # Devuelve un string con informacion del objeto.
+  def to_s
+    "#{self.class.name}(#{@jugadores},#{@puntuacion})"
   end
 end
