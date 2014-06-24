@@ -121,6 +121,7 @@ end
 
 class BoteError < Exception; end
 class EntidadError < Exception; end
+class EstadoError < Exception; end
 
 # Modela el estado de un problema de busqueda sobre un árbol
 # implícito de expansión. 
@@ -131,12 +132,13 @@ class LCR
   # Inicializa value con un nuevo Hash con la llaves
   # where, left, right. Cada una con un valor que es
   # la información del estado.
+    
   def initialize(where,left,right)
 
     raise ArgumentError.new("El numero de entidades entre las orillas del problema debe ser \'3\' y fueron dados \'#{left.length + right.length}\'") unless left.length + right.length == 3
     
-    if !(where.to_s =~ /\A(i|d|l|r|left|right|izquierda|derecha)\z/)
-      raise BoteError.new("La posicion \'#{where}\' del bote es invalida. Posibles posiciones: \':i\', \':d\', \':l\', \':r\', \':left\', \':right\', \':izquierda\', \':derecha\'.")
+    if !(where.to_s =~ /\A(left|right)\z/)
+      raise BoteError.new("La posicion \'#{where}\' del bote es invalida. Posibles posiciones: \':left\' ó \':right\'.")
     end
 
     left.each do |e|
@@ -156,40 +158,42 @@ class LCR
     rescue NoMethodError => nme
       raise NoMethodError.new("Algun elemento de los arreglos (left ó right) ó where no se puede pasar a Symbol")
     end
+
     @value = {
       "where" => side,
       "left"  => left,
       "right" => right
     }
+    raise EstadoError.new("Las condiciones dadas en los parametros del estado. Fallan, no puede ni comenzar!") unless self.check
   end        
 
   # Resuelve el problema de búsqueda.
   def each b
-    if @value["where"].to_s =~ /\A(d|r|right|derecha)\z/
+    if @value["where"].to_s =~ /\Aright\z/
       @value["right"].each do |x|
         derecha = Array.new(@value["right"])
         derecha.delete(x)
         izquierda = (Array.new(@value["left"])).push(x)
-        ret = LCR.new("l",izquierda,derecha)
+        ret = LCR.new("left",izquierda,derecha)
         if ret.check
           b.call ret
         end
       end
-      ret = LCR.new("l",@value["left"],@value["right"])
+      ret = LCR.new("left",@value["left"],@value["right"])
       if ret.check
         b.call ret
       end
-    else    
+    else
       @value["left"].each do |x|
         izquierda = Array.new(@value["left"])
         izquierda.delete(x)
         derecha = (Array.new(@value["right"])).push(x)
-        ret = LCR.new("r",izquierda,derecha)
+        ret = LCR.new("right",izquierda,derecha)
         if ret.check
           b.call ret
         end
       end
-      ret = LCR.new("r",@value["left"],@value["right"])
+      ret = LCR.new("right",@value["left"],@value["right"])
       if ret.check
         b.call ret
       end
@@ -202,7 +206,7 @@ class LCR
   end
 
   def check
-    if (@value["where"].to_s =~ /\A(d|r|right|derecha)\z/)
+    if (@value["where"].to_s =~ /\Aright\z/)
       if !@value["left"].empty?
         if (@value["left"].include?(:lobo) and @value["left"].include?(:cabra)) or
             (@value["left"].include?(:cabra) and @value["left"].include?(:repollo))
@@ -226,7 +230,7 @@ class LCR
       end
     end
   end
-
+  
   def ==(lcr2)
     (@value["right"].sort == lcr2.value["right"].sort) and
       (@value["left"].sort == lcr2.value["left"].sort) and
@@ -234,7 +238,7 @@ class LCR
   end
   
   def solve
-    goal = LCR.new(:r,[],[:repollo,:cabra,:lobo])
+    goal = LCR.new(:right,[],[:repollo,:cabra,:lobo])
     p = lambda { |x| x == goal }
     path(self,p)
   end
