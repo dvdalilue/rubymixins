@@ -41,12 +41,10 @@ module BFS
   def path(start, predicate)
     if start.respond_to? 'bfs'
       p = { start => [] }
-      padre = start
       start.bfs(start) do |nodo|
         return p[nodo] + [nodo] if predicate.call(nodo.value)
-        block = lambda { |c| p[c] = p[padre] + [nodo] }
+        block = lambda { |c| p[c] = p[nodo] + [nodo] }
         nodo.each block
-        padre = nodo
       end
     else
       puts "*** path: \'#{start}\' no es una estructura que pueda ser recorrida en BFS"
