@@ -124,23 +124,72 @@ class LCR
   # where, left, right. Cada una con un valor que es
   # la información del estado.
   def initialize(where,left,right)
-    
-    left.map! { |c| c.to_sym }
-    right.map! { |c| c.to_sym }
+
+    left.map! { |c| c.class==Symbol ? c : c.to_sym }
+    right.map! { |c| c.class==Symbol ? c : c.to_sym }
     
     @value = {
       "where" => where.to_sym,
       "left"  => left,
       "right" => right
     }
-  end
+  end        
+
   # Resuelve el problema de búsqueda.
-  def solve
+  def each
+    case
+    when @value["where"].equal?(:r)      
+      @value["right"].each do |x|
+        derecha = Array.new(@value["right"])
+        derecha.delete(x)
+        izquierda = (Array.new(@value["left"])).push(x)
+        ret = LCR.new("l",izquierda,derecha)
+        if ret.check then
+          yield(ret)
+        end
+      end
+      ret = LCR.new("l",@value["left"],@value["right"])
+      yield(ret)
+    when @value["where"].equal?(:l)      
+      @value["left"].each do |x|
+        izquierda = Array.new(@value["left"])
+        izquierda.delete(x)
+        derecha = (Array.new(@value["right"])).push(x)
+        ret = LCR.new("r",izquierda,derecha)
+        if ret.check then 
+          yield(ret)
+        end
+      end
+      ret = LCR.new("r",@value["left"],@value["right"])
+      yield(ret)
+    end
   end
+
   # Devuelve un string del Hash value.
   def to_s
     value.to_s
   end
+
+  def check
+    if @value["where"] == :r
+      if @value["left"].length > 0 and @value["left"].length < 3
+        if (@value["left"].include?(:lobo) and @value["left"].include?(:cabra)) or (@value["left"].include?(:cabra) and @value["left"].include?(:repollo))
+          false
+        else
+          true
+        end
+      end
+    else
+      if @value["right"].length > 0 and @value["right"].length < 3
+        if (@value["right"].include?(:lobo) and @value["right"].include?(:cabra)) or (@value["right"].include?(:cabra) and @value["right"].include?(:repollo))
+          false
+        else
+          true
+        end
+      end
+    end
+  end
+
 end
 
   
