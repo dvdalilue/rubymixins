@@ -253,6 +253,7 @@ class LCR
     raise EstadoError.new("Las condiciones dadas en los parametros del estado. Fallan, no puede ni comenzar!") unless self.check
     goal = LCR.new(:right,[],[:repollo,:cabra,:lobo])
     p = lambda { |x| x == goal }
-    path(self,p)
+    path(self,p).each { |m| puts m ;puts "                  ↓"}
+    return
   end
 end
