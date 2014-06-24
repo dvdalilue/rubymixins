@@ -129,6 +129,12 @@ class LCR
   # Inicializa value con un nuevo Hash con la llaves
   # where, left, right. Cada una con un valor que es
   # la información del estado.
+  
+  MOV = { 
+    :r => "l",
+    :l => "r"
+  }
+  
   def initialize(where,left,right)
 
     raise ArgumentError.new("El numero de entidades entre las orillas del problema debe ser \'3\' y fueron dados \'#{left.length + right.length}\'") unless left.length + right.length == 3
@@ -164,7 +170,8 @@ class LCR
   # Resuelve el problema de búsqueda.
   def each b
     case
-    when @value["where"].equal?(:r)      
+#    when @value["where"].equal?(:r)      
+    when [:d,:r,:derecha,:right].include?(@value["where"])
       @value["right"].each do |x|
         derecha = Array.new(@value["right"])
         derecha.delete(x)
@@ -172,17 +179,14 @@ class LCR
         ret = LCR.new("l",izquierda,derecha)
         if ret.check
           b.call(ret)
-        else
-          print("\n\t");print(ret);print("\n")
         end
       end
       ret = LCR.new("l",@value["left"],@value["right"])
       if ret.check
         b.call(ret)
-      else
-        print("\n\t");print(ret);print("\n")
       end
-    when @value["where"].equal?(:l)      
+#    when @value["where"].equal?(:l)      
+    when [:i,:l,:izquierda,:left].include?(@value["where"])
       @value["left"].each do |x|
         izquierda = Array.new(@value["left"])
         izquierda.delete(x)
@@ -190,15 +194,11 @@ class LCR
         ret = LCR.new("r",izquierda,derecha)
         if ret.check
           b.call(ret)        
-        else
-          print("\n\t");print(ret);print("\n")
         end
       end
       ret = LCR.new("r",@value["left"],@value["right"])
       if ret.check
         b.call(ret)
-      else
-        print("\n\t");print(ret);print("\n")
       end
     end
   end
@@ -209,8 +209,9 @@ class LCR
   end
 
   def check
-    if @value["where"] == :r
-      if @value["left"].empty?
+#    if @value["where"] == :r
+    if [:d,:r,:derecha,:right].include?(@value["where"])
+      if @value["left"].length > 0 and @value["left"].length < 3
         if (@value["left"].include?(:lobo) and @value["left"].include?(:cabra)) or
             (@value["left"].include?(:cabra) and @value["left"].include?(:repollo))
           false
@@ -221,7 +222,7 @@ class LCR
         true
       end
     else
-      if @value["right"].empty?
+      if @value["right"].length > 0 and @value["right"].length < 3
         if (@value["right"].include?(:lobo) and @value["right"].include?(:cabra)) or
             (@value["right"].include?(:cabra) and @value["right"].include?(:repollo))
           false
@@ -242,7 +243,8 @@ class LCR
   
   def solve
     goal = [:repollo,:cabra,:lobo]
-    p = Proc.new { |x| x["right"].sort == goal.sort and x["where"] == :r}
+    p = Proc.new { |x| x["right"].sort == goal.sort and [:d,:r,:derecha,:right].include?(@value["where"])
+}
     path(self,p)
   end
 end
