@@ -166,32 +166,41 @@ class LCR
     }
   end        
 
-  # Resuelve el problema de búsqueda.
+  # Itera sobre sobre los hijos validos del estado actual.
   def each b
+    #revisa de que lado esta el bote
     if @value["where"].to_s =~ /\Aright\z/
+      # itera sobre los valores del lado derecho y va creando estados
+      # donde ese valor este en el otro lado
       @value["right"].each do |x|
         derecha = Array.new(@value["right"])
         derecha.delete(x)
         izquierda = (Array.new(@value["left"])).push(x)
         ret = LCR.new("left",izquierda,derecha)
+        #revisa el valos antes de devolverlo a ver si es valido
         if ret.check
           b.call ret
         end
       end
+      #crea un estado donde el barco se mueve sin nada
       ret = LCR.new("left",@value["left"],@value["right"])
       if ret.check
         b.call ret
       end
     else
+      # itera sobre los valores del lado derecho y va creando estados
+      # donde ese valor este en el otro lado
       @value["left"].each do |x|
         izquierda = Array.new(@value["left"])
         izquierda.delete(x)
         derecha = (Array.new(@value["right"])).push(x)
         ret = LCR.new("right",izquierda,derecha)
+        #revisa el valos antes de devolverlo a ver si es valido
         if ret.check
           b.call ret
         end
       end
+      #crea un estado donde el barco se mueve sin nada
       ret = LCR.new("right",@value["left"],@value["right"])
       if ret.check
         b.call ret
@@ -199,11 +208,12 @@ class LCR
     end
   end
 
-  # Devuelve un string del Hash value.
+  # Devuelve un string con la informacion del value.
   def to_s
     "(#{@value["left"]}) <-#{@value["where"]}-> (#{@value["right"]})"
   end
 
+  # Revisa si un estado es valido
   def check
     if (@value["where"].to_s =~ /\Aright\z/)
       if !@value["left"].empty?
@@ -230,12 +240,15 @@ class LCR
     end
   end
   
+  # Implementacion del metodo == para que funcione con LCR
   def ==(lcr2)
     (@value["right"].sort == lcr2.value["right"].sort) and
       (@value["left"].sort == lcr2.value["left"].sort) and
       (@value["where"] == lcr2.value["where"])
   end
   
+  # Soluciona el problema del Lobo, Cabra y Repollo y devuelve los pasos para
+  # resolverlo
   def solve
     raise EstadoError.new("Las condiciones dadas en los parametros del estado. Fallan, no puede ni comenzar!") unless self.check
     goal = LCR.new(:right,[],[:repollo,:cabra,:lobo])
