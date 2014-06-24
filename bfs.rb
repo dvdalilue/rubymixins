@@ -30,6 +30,7 @@ module BFS
   # predicado(predicate) haciendo uso del metodo bfs.
   def find(start, predicate)
     if start.respond_to? 'bfs'
+      b = lambda { |c| print(c);print("\n") }
       start.bfs(start) { |nodo| return nodo if predicate.call(nodo.value) }
     else
       puts "*** find: \'#{start}\' no es una estructura que pueda ser recorrida en BFS"
@@ -118,6 +119,7 @@ end
 # Modela el estado de un problema de busqueda sobre un árbol
 # implícito de expansión. 
 class LCR
+  include BFS
   # Hash que mantiene la información del estado.
   attr_reader :value
   # Inicializa value con un nuevo Hash con la llaves
@@ -136,7 +138,7 @@ class LCR
   end        
 
   # Resuelve el problema de búsqueda.
-  def each
+  def each b
     case
     when @value["where"].equal?(:r)      
       @value["right"].each do |x|
@@ -144,24 +146,40 @@ class LCR
         derecha.delete(x)
         izquierda = (Array.new(@value["left"])).push(x)
         ret = LCR.new("l",izquierda,derecha)
-        if ret.check then
-          yield(ret)
+        if ret.check
+          b.call(ret)
+        else
+          print("\n\t");print(ret);print("\n")
         end
+#        yield(ret)
       end
       ret = LCR.new("l",@value["left"],@value["right"])
-      yield(ret)
+      if ret.check
+        b.call(ret)
+      else
+        print("\n\t");print(ret);print("\n")
+      end
+#      yield(ret)
     when @value["where"].equal?(:l)      
       @value["left"].each do |x|
         izquierda = Array.new(@value["left"])
         izquierda.delete(x)
         derecha = (Array.new(@value["right"])).push(x)
         ret = LCR.new("r",izquierda,derecha)
-        if ret.check then 
-          yield(ret)
+        if ret.check
+          b.call(ret)        
+        else
+          print("\n\t");print(ret);print("\n")
         end
+#        yield(ret)
       end
       ret = LCR.new("r",@value["left"],@value["right"])
-      yield(ret)
+      if ret.check
+        b.call(ret)
+      else
+        print("\n\t");print(ret);print("\n")
+      end
+#      yield(ret)
     end
   end
 
@@ -178,6 +196,8 @@ class LCR
         else
           true
         end
+      else
+        true
       end
     else
       if @value["right"].length > 0 and @value["right"].length < 3
@@ -186,10 +206,21 @@ class LCR
         else
           true
         end
+      else
+        true
       end
     end
   end
 
+  def ==(lcr2)
+   (@value["right"].sort == lcr2.value["right"].sort) and (@value["left"].sort == lcr2.value["left"].sort) and (@value["where"] == lcr2.value["where"])
+  end
+  
+  def solve
+    goal = [:repollo,:cabra,:lobo]
+    p = Proc.new { |x| x["right"].sort == goal.sort and x["where"] == :r}
+    path(self,p)
+  end
 end
 
   
