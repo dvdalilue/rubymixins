@@ -117,6 +117,9 @@ class GraphNode
   end
 end
 
+class BoteError < Exception; end
+class EntidadError < Exception; end
+
 # Modela el estado de un problema de busqueda sobre un árbol
 # implícito de expansión. 
 class LCR
@@ -129,13 +132,27 @@ class LCR
   def initialize(where,left,right)
 
     raise ArgumentError.new("El numero de entidades entre las orillas del problema debe ser \'3\' y fueron dados \'#{left.length + right.length}\'") unless left.length + right.length == 3
+    
+    if !(where.to_s =~ /\A(i|d|l|r|left|right|izquierda|derecha)\z/)
+      raise BoteError.new("La posicion \'#{where}\' del bote es invalida. Posibles posiciones: \':i\', \':d\', \':l\', \':r\', \':left\', \':right\', \':izquierda\', \':derecha\'.")
+    end
+
+    left.each do |e|
+      if !(e.to_s =~ /\A(cabra|repollo|lobo)\z/)
+        raise EntidadError.new("Entidad desconocida \'#{e}\'. Las entidades de las orillas debe ser: \'cabra\', \'repollo\' ó \'lobo\'")
+      end
+    end
+    right.each do |e|
+      if !(e.to_s =~ /\A(cabra|repollo|lobo)\z/)
+        raise EntidadError.new("Entidad desconocida \'#{e}\'. Las entidades de las orillas debe ser: \'cabra\', \'repollo\' ó \'lobo\'")
+      end
+    end
     begin
       left.map!  { |c| c.to_sym }
       right.map! { |c| c.to_sym }
       side = where.to_sym
     rescue NoMethodError => nme
-      puts "Algun elemento de los arreglos (left ó right) ó where no se puede pasar a Symbol"
-      exit
+      raise NoMethodError.new("Algun elemento de los arreglos (left ó right) ó where no se puede pasar a Symbol")
     end
     @value = {
       "where" => side,
