@@ -134,8 +134,9 @@ class LCR
   # la información del estado.
     
   def initialize(where,left,right)
-
-    raise ArgumentError.new("El numero de entidades entre las orillas del problema debe ser \'3\' y fueron dados \'#{left.length + right.length}\'") unless left.length + right.length == 3
+    (right.map! { |r| r.to_s }).uniq!
+    (left.map! { |l| l.to_s }).uniq!
+    raise ArgumentError.new("El numero de entidades diferenetes entre las orillas del problema debe ser \'3\' y fueron dados \'#{left.length + right.length}\'") unless left.length + right.length == 3
     
     if !(where.to_s =~ /\A(left|right)\z/)
       raise BoteError.new("La posicion \'#{where}\' del bote es invalida. Posibles posiciones: \':left\' ó \':right\'.")
