@@ -127,12 +127,7 @@ class LCR
   # Inicializa value con un nuevo Hash con la llaves
   # where, left, right. Cada una con un valor que es
   # la información del estado.
-  
-  MOV = { 
-    :r => "l",
-    :l => "r"
-  }
-  
+    
   def initialize(where,left,right)
 
     raise ArgumentError.new("El numero de entidades entre las orillas del problema debe ser \'3\' y fueron dados \'#{left.length + right.length}\'") unless left.length + right.length == 3
@@ -207,32 +202,20 @@ class LCR
   end
 
   def check
-#    if @value["where"] == :r
-    if [:d,:r,:derecha,:right].include?(@value["where"])
-      if @value["left"].length > 0 and @value["left"].length < 3
-        if (@value["left"].include?(:lobo) and @value["left"].include?(:cabra)) or
-            (@value["left"].include?(:cabra) and @value["left"].include?(:repollo))
-          false
-        else
-          true
-        end
-      else
-        true
-      end
+    if (@value["left"].include?(:lobo) and @value["left"].include?(:cabra)) or
+        (@value["left"].include?(:cabra) and @value["left"].include?(:repollo))
+      false
     else
-      if @value["right"].length > 0 and @value["right"].length < 3
-        if (@value["right"].include?(:lobo) and @value["right"].include?(:cabra)) or
-            (@value["right"].include?(:cabra) and @value["right"].include?(:repollo))
-          false
-        else
-          true
-        end
-      else
-        true
-      end
+      true
+    end
+    if (@value["right"].include?(:lobo) and @value["right"].include?(:cabra)) or
+        (@value["right"].include?(:cabra) and @value["right"].include?(:repollo))
+      false
+    else
+      true
     end
   end
-
+    
   def ==(lcr2)
     (@value["right"].sort == lcr2.value["right"].sort) and
       (@value["left"].sort == lcr2.value["left"].sort) and
