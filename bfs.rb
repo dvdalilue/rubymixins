@@ -30,6 +30,7 @@ module BFS
   # predicado(predicate) haciendo uso del metodo bfs.
   def find(start, predicate)
     if start.respond_to? 'bfs'
+      b = lambda { |c| print(c);print("\n") }
       start.bfs(start) { |nodo| return nodo if predicate.call(nodo.value) }
     else
       puts "*** find: \'#{start}\' no es una estructura que pueda ser recorrida en BFS"
@@ -119,6 +120,7 @@ end
 # Modela el estado de un problema de busqueda sobre un árbol
 # implícito de expansión. 
 class LCR
+  include BFS
   # Hash que mantiene la información del estado.
   attr_reader :value
   # Inicializa value con un nuevo Hash con la llaves
@@ -127,19 +129,23 @@ class LCR
   def initialize(where,left,right)
 
     raise ArgumentError.new("El numero de entidades entre las orillas del problema debe ser \'3\' y fueron dados \'#{left.length + right.length}\'") unless left.length + right.length == 3
-
-    left.map! { |c| c.class==Symbol ? c : c.to_sym }
-    right.map! { |c| c.class==Symbol ? c : c.to_sym }
-    
+    begin
+      left.map!  { |c| c.to_sym }
+      right.map! { |c| c.to_sym }
+      side = where.to_sym
+    rescue NoMethodError => nme
+      puts "Algun elemento de los arreglos (left ó right) ó where no se puede pasar a Symbol"
+      exit
+    end
     @value = {
-      "where" => where.to_sym,
+      "where" => side,
       "left"  => left,
       "right" => right
     }
   end        
 
   # Resuelve el problema de búsqueda.
-  def each
+  def each b
     case
     when @value["where"].equal?(:r)      
       @value["right"].each do |x|
@@ -147,24 +153,36 @@ class LCR
         derecha.delete(x)
         izquierda = (Array.new(@value["left"])).push(x)
         ret = LCR.new("l",izquierda,derecha)
-        if ret.check then
-          yield(ret)
+        if ret.check
+          b.call(ret)
+        else
+          print("\n\t");print(ret);print("\n")
         end
       end
       ret = LCR.new("l",@value["left"],@value["right"])
-      yield(ret)
+      if ret.check
+        b.call(ret)
+      else
+        print("\n\t");print(ret);print("\n")
+      end
     when @value["where"].equal?(:l)      
       @value["left"].each do |x|
         izquierda = Array.new(@value["left"])
         izquierda.delete(x)
         derecha = (Array.new(@value["right"])).push(x)
         ret = LCR.new("r",izquierda,derecha)
-        if ret.check then 
-          yield(ret)
+        if ret.check
+          b.call(ret)        
+        else
+          print("\n\t");print(ret);print("\n")
         end
       end
       ret = LCR.new("r",@value["left"],@value["right"])
-      yield(ret)
+      if ret.check
+        b.call(ret)
+      else
+        print("\n\t");print(ret);print("\n")
+      end
     end
   end
 
@@ -174,20 +192,40 @@ class LCR
   end
 
   def check
-    if @value["where"] == :r && !@value["left"].empty?
-      if (@value["left"].include?(:lobo) and @value["left"].include?(:cabra)) or
-          (@value["left"].include?(:cabra) and @value["left"].include?(:repollo))
-        false
+    if @value["where"] == :r
+      if @value["left"].empty?
+        if (@value["left"].include?(:lobo) and @value["left"].include?(:cabra)) or
+            (@value["left"].include?(:cabra) and @value["left"].include?(:repollo))
+          false
+        else
+          true
+        end
       else
         true
       end
-    elsif !@value["right"].empty?
-      if (@value["right"].include?(:lobo) and @value["right"].include?(:cabra)) or
-          (@value["right"].include?(:cabra) and @value["right"].include?(:repollo))
-        false
+    else
+      if @value["right"].empty?
+        if (@value["right"].include?(:lobo) and @value["right"].include?(:cabra)) or
+            (@value["right"].include?(:cabra) and @value["right"].include?(:repollo))
+          false
+        else
+          true
+        end
       else
         true
       end
     end
+  end
+
+  def ==(lcr2)
+    (@value["right"].sort == lcr2.value["right"].sort) and
+      (@value["left"].sort == lcr2.value["left"].sort) and
+      (@value["where"] == lcr2.value["where"])
+  end
+  
+  def solve
+    goal = [:repollo,:cabra,:lobo]
+    p = Proc.new { |x| x["right"].sort == goal.sort and x["where"] == :r}
+    path(self,p)
   end
 end
