@@ -30,8 +30,7 @@ module BFS
   # predicado(predicate) haciendo uso del metodo bfs.
   def find(start, predicate)
     if start.respond_to? 'bfs'
-      b = lambda { |c| print(c);print("\n") }
-      start.bfs(start) { |nodo| return nodo if predicate.call(nodo.value) }
+      start.bfs(start) { |nodo| return nodo if predicate.call(nodo) }
     else
       puts "*** find: \'#{start}\' no es una estructura que pueda ser recorrida en BFS"
     end
@@ -42,7 +41,12 @@ module BFS
     if start.respond_to? 'bfs'
       p = { start => [] }
       start.bfs(start) do |nodo|
-        return p[nodo] + [nodo] if predicate.call(nodo.value)
+        p.keys.each do |x|
+          if x == nodo
+            nodo = x
+          end
+        end
+        return p[nodo] + [nodo] if predicate.call(nodo)
         block = lambda { |c| p[c] = p[nodo] + [nodo] }
         nodo.each block
       end
@@ -161,54 +165,45 @@ class LCR
 
   # Resuelve el problema de búsqueda.
   def each b
-    case
-    when @value["where"].equal?(:r)
+    if @value["where"].to_s =~ /\A(d|r|right|derecha)\z/
       @value["right"].each do |x|
         derecha = Array.new(@value["right"])
         derecha.delete(x)
         izquierda = (Array.new(@value["left"])).push(x)
         ret = LCR.new("l",izquierda,derecha)
         if ret.check
-          b.call(ret)
-        else
-          print("\n\t");print(ret);print("\n")
+          b.call ret
         end
       end
       ret = LCR.new("l",@value["left"],@value["right"])
       if ret.check
-        b.call(ret)
-      else
-        print("\n\t");print(ret);print("\n")
+        b.call ret
       end
-    when @value["where"].equal?(:l)      
+    else    
       @value["left"].each do |x|
         izquierda = Array.new(@value["left"])
         izquierda.delete(x)
         derecha = (Array.new(@value["right"])).push(x)
         ret = LCR.new("r",izquierda,derecha)
         if ret.check
-          b.call(ret)        
-        else
-          print("\n\t");print(ret);print("\n")
+          b.call ret
         end
       end
       ret = LCR.new("r",@value["left"],@value["right"])
       if ret.check
-        b.call(ret)
-      else
-        print("\n\t");print(ret);print("\n")
+        b.call ret
       end
     end
   end
 
   # Devuelve un string del Hash value.
   def to_s
-    value.to_s
+    "(#{@value["left"]}) <-#{@value["where"]}-> (#{@value["right"]})"
   end
 
   def check
-    if @value["where"] == :r
-      if @value["left"].empty?
+    if (@value["where"].to_s =~ /\A(d|r|right|derecha)\z/)
+      if !@value["left"].empty?
         if (@value["left"].include?(:lobo) and @value["left"].include?(:cabra)) or
             (@value["left"].include?(:cabra) and @value["left"].include?(:repollo))
           false
@@ -219,7 +214,7 @@ class LCR
         true
       end
     else
-      if @value["right"].empty?
+      if !@value["right"].empty?
         if (@value["right"].include?(:lobo) and @value["right"].include?(:cabra)) or
             (@value["right"].include?(:cabra) and @value["right"].include?(:repollo))
           false
@@ -239,8 +234,8 @@ class LCR
   end
   
   def solve
-    goal = [:repollo,:cabra,:lobo]
-    p = Proc.new { |x| x["right"].sort == goal.sort and x["where"] == :r}
+    goal = LCR.new(:r,[],[:repollo,:cabra,:lobo])
+    p = lambda { |x| x == goal }
     path(self,p)
   end
 end
