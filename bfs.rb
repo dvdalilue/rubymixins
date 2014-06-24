@@ -42,8 +42,9 @@ module BFS
       p = { start => [] }
       padre = start
       start.bfs(start) do |nodo|
-        return p[padre] + [nodo] if predicate.call(nodo.value)
-        p[nodo] = p[padre] + [nodo]
+        return p[nodo] + [nodo] if predicate.call(nodo.value)
+        block = lambda { |c| p[c] = p[padre] + [nodo] }
+        nodo.each block
         padre = nodo
       end
     else
@@ -125,6 +126,8 @@ class LCR
   # la información del estado.
   def initialize(where,left,right)
 
+    raise ArgumentError.new("El numero de entidades entre las orillas del problema debe ser \'3\' y fueron dados \'#{left.length + right.length}\'") unless left.length + right.length == 3
+
     left.map! { |c| c.class==Symbol ? c : c.to_sym }
     right.map! { |c| c.class==Symbol ? c : c.to_sym }
     
@@ -171,25 +174,20 @@ class LCR
   end
 
   def check
-    if @value["where"] == :r
-      if @value["left"].length > 0 and @value["left"].length < 3
-        if (@value["left"].include?(:lobo) and @value["left"].include?(:cabra)) or (@value["left"].include?(:cabra) and @value["left"].include?(:repollo))
-          false
-        else
-          true
-        end
+    if @value["where"] == :r && !@value["left"].empty?
+      if (@value["left"].include?(:lobo) and @value["left"].include?(:cabra)) or
+          (@value["left"].include?(:cabra) and @value["left"].include?(:repollo))
+        false
+      else
+        true
       end
-    else
-      if @value["right"].length > 0 and @value["right"].length < 3
-        if (@value["right"].include?(:lobo) and @value["right"].include?(:cabra)) or (@value["right"].include?(:cabra) and @value["right"].include?(:repollo))
-          false
-        else
-          true
-        end
+    elsif !@value["right"].empty?
+      if (@value["right"].include?(:lobo) and @value["right"].include?(:cabra)) or
+          (@value["right"].include?(:cabra) and @value["right"].include?(:repollo))
+        false
+      else
+        true
       end
     end
   end
-
 end
-
-  
